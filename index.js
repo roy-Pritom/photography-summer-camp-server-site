@@ -33,6 +33,15 @@ async function run() {
 
         const instructorsCollection = client.db('summerCampDB').collection('instructors');
         const usersCollection = client.db('summerCampDB').collection('users');
+        const classCollection = client.db('summerCampDB').collection('classes');
+
+        //   classes
+        app.post('/classes', async (req, res) => {
+            const myClass = req.body;
+            const result = await classCollection.insertOne(myClass);
+            res.send(result);
+        })
+
 
         // instructors
         app.get('/instructors', async (req, res) => {
@@ -60,11 +69,11 @@ async function run() {
 
         //   admin
 
-        app.get('/users/admin/:email',async(req,res)=>{
-            const email=req.params.email;
-            const query={email:email};
-            const user=await usersCollection.findOne(query);
-            const result={admin:user?.role==='admin'}
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            const result = { admin: user?.role === 'admin' }
             res.send(result);
         })
 
@@ -74,7 +83,7 @@ async function run() {
             const filter = { _id: new ObjectId(id) };
             const updateDocument = {
                 $set: {
-                    role:'admin'
+                    role: 'admin'
                 },
             };
             const result = await usersCollection.updateOne(filter, updateDocument);
@@ -85,21 +94,21 @@ async function run() {
 
         // instructor
 
-        app.get('/users/instructor/:email',async(req,res)=>{
-            const email=req.params.email;
-            const query={email:email};
-            const user=await usersCollection.findOne(query);
-            const result={instructor:user?.role==='instructor'};
+        app.get('/users/instructor/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            const result = { instructor: user?.role === 'instructor' };
             res.send(result);
         })
-        
+
         app.patch('/users/instructor/:id', async (req, res) => {
             const id = req.params.id;
             console.log(id);
             const filter = { _id: new ObjectId(id) };
             const updateDocument = {
                 $set: {
-                    role:'instructor'
+                    role: 'instructor'
                 },
             };
             const result = await usersCollection.updateOne(filter, updateDocument);
