@@ -14,17 +14,17 @@ app.use(express.json());
 const verifyJWT = (req, res, next) => {
     const authorization = req.headers.authorization;
     if (!authorization) {
-      return res.status(401).send({ error: true, message: 'unauthorized access' });
+        return res.status(401).send({ error: true, message: 'unauthorized access' });
     }
     const token = authorization.split(' ')[1];
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-      if (err) {
-        return res.status(401).send({ error: true, message: 'unauthorized access' })
-      }
-      req.decoded = decoded;
-      next();
+        if (err) {
+            return res.status(401).send({ error: true, message: 'unauthorized access' })
+        }
+        req.decoded = decoded;
+        next();
     })
-  }
+}
 
 
 
@@ -51,6 +51,7 @@ async function run() {
         const instructorsCollection = client.db('summerCampDB').collection('instructors');
         const usersCollection = client.db('summerCampDB').collection('users');
         const classCollection = client.db('summerCampDB').collection('classes');
+        const cartCollection = client.db('summerCampDB').collection('cart');
 
 
         // jwt
@@ -62,7 +63,7 @@ async function run() {
 
 
         //   classes
-        app.get('/classes',verifyJWT, async (req, res) => {
+        app.get('/classes', async (req, res) => {
             const result = await classCollection.find().toArray();
             res.send(result);
         })
@@ -105,7 +106,7 @@ async function run() {
             res.send(result);
 
         })
-    
+
 
 
         // users
@@ -120,14 +121,26 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/users',verifyJWT, async (req, res) => {
+        app.get('/users', verifyJWT, async (req, res) => {
             const result = await usersCollection.find().toArray();
+            res.send(result);
+        })
+
+
+        //  cart
+        app.post('/carts',async(req,res)=>{
+            const data=req.body;
+            const result=await cartCollection.insertOne(data);
+            res.send(result);
+        })
+        app.get('/carts',async(req,res)=>{
+            const result=await cartCollection.find().toArray();
             res.send(result);
         })
 
         //   admin
 
-        app.get('/users/admin/:email',verifyJWT, async (req, res) => {
+        app.get('/users/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             if (req.decoded.email !== email) {
                 return res.status(403).send({ error: true, message: 'forbidden access' })
@@ -156,7 +169,7 @@ async function run() {
 
         // instructor
 
-        app.get('/users/instructor/:email',verifyJWT, async (req, res) => {
+        app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             if (req.decoded.email !== email) {
                 return res.status(403).send({ error: true, message: 'forbidden access' })
@@ -168,7 +181,7 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/instructors',verifyJWT, async (req, res) => {
+        app.get('/instructors', async (req, res) => {
             const result = await instructorsCollection.find().toArray();
             res.send(result);
         })
