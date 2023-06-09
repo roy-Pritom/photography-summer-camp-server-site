@@ -62,7 +62,7 @@ async function run() {
 
 
         //   classes
-        app.get('/classes', async (req, res) => {
+        app.get('/classes',verifyJWT, async (req, res) => {
             const result = await classCollection.find().toArray();
             res.send(result);
         })
@@ -105,13 +105,7 @@ async function run() {
             res.send(result);
 
         })
-
-
-        // instructors
-        app.get('/instructors', async (req, res) => {
-            const result = await instructorsCollection.find().toArray();
-            res.send(result);
-        })
+    
 
 
         // users
@@ -126,15 +120,19 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/users', async (req, res) => {
+        app.get('/users',verifyJWT, async (req, res) => {
             const result = await usersCollection.find().toArray();
             res.send(result);
         })
 
         //   admin
 
-        app.get('/users/admin/:email', async (req, res) => {
+        app.get('/users/admin/:email',verifyJWT, async (req, res) => {
             const email = req.params.email;
+            if (req.decoded.email !== email) {
+                return res.status(403).send({ error: true, message: 'forbidden access' })
+
+            }
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             const result = { admin: user?.role === 'admin' }
@@ -167,6 +165,11 @@ async function run() {
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             const result = { instructor: user?.role === 'instructor' };
+            res.send(result);
+        })
+
+        app.get('/instructors',verifyJWT, async (req, res) => {
+            const result = await instructorsCollection.find().toArray();
             res.send(result);
         })
 
