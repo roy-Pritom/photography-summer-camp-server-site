@@ -4,6 +4,9 @@ const port = process.env.PORT || 5000;
 require('dotenv').config()
 const jwt = require('jsonwebtoken');
 
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
+
+
 const cors = require('cors')
 // middleware
 app.use(cors());
@@ -52,6 +55,7 @@ async function run() {
         const usersCollection = client.db('summerCampDB').collection('users');
         const classCollection = client.db('summerCampDB').collection('classes');
         const cartCollection = client.db('summerCampDB').collection('cart');
+        const paymentCollection = client.db("summerCampDB").collection("payments");
 
 
         // jwt
@@ -63,9 +67,20 @@ async function run() {
 
 
         //   classes
-        app.get('/classes', async (req, res) => {
-            const result = await classCollection.find().toArray();
-            res.send(result);
+        app.get('/classes/:all', async (req, res) => {
+            const all=req.params.all;
+            if(all==='true')
+            {
+                const result = await classCollection.find().toArray();
+               res.send(result);
+            }
+           else
+           {
+
+               const query={status:'approved'}
+               const result = await classCollection.find(query).toArray();
+               res.send(result);
+           }
         })
 
 
@@ -79,6 +94,8 @@ async function run() {
             const result = await classCollection.find(query).toArray();
             res.send(result);
         })
+
+    
 
         app.post('/classes', async (req, res) => {
             const myClass = req.body;
@@ -133,9 +150,32 @@ async function run() {
             const result=await cartCollection.insertOne(data);
             res.send(result);
         })
-        app.get('/carts',async(req,res)=>{
-            const result=await cartCollection.find().toArray();
+        app.get('/carts',verifyJWT,async(req,res)=>{
+            const email=req.query.email;
+            if(!email)
+            {
+                res.send([]);
+            }
+            if (req.decoded.email !== email) {
+                return res.status(403).send({ error: true, message: 'forbidden access' })
+
+            }
+            const query={email:email};
+            const result=await cartCollection.find(query).toArray();
             res.send(result);
+        })
+        app.get('/carts/:id',async(req,res)=>{
+            const id=req.params.id;
+            const query={_id:new ObjectId(id)};
+            const result=await cartCollection.findOne(query);
+            res.send(result);
+        })
+
+        app.delete('/carts/:id',async(req,res)=>{
+          const id=req.params.id;
+          const query={_id:new ObjectId(id)}
+          const result=await cartCollection.deleteOne(query);
+          res.send(result);
         })
 
         //   admin
@@ -199,6 +239,30 @@ async function run() {
             res.send(result);
 
         })
+        // payment intent post
+        app.post('/create-payment-intent',verifyJWT,async(req,res)=>{
+            const {price}=req.body;
+            const amount=parseInt(price*100)
+            const paymentIntent=await stripe.paymentIntents.create({
+                amount:amount,
+                currency:"usd",
+                payment_method_types:['card']
+            })
+
+            res.send({
+                clientSecret:paymentIntent.client_secret
+            })
+        })
+        // payment related api
+        app.post('/payments', verifyJWT, async (req, res) => {
+            const payment = req.body;
+            const insertResult = await paymentCollection.insertOne(payment);
+      
+            // const query = { _id: { $in: payment.cartItems.map(id => new ObjectId(id)) } }
+            // const deleteResult = await cartCollection.deleteMany(query)
+      
+            res.send({ insertResult});
+          })
 
 
         // Send a ping to confirm a successful connection
