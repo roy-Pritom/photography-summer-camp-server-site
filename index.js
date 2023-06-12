@@ -77,7 +77,7 @@ async function run() {
 
                 const query = { status: 'approved' }
                 const result = await classCollection.find(query).sort({
-                    totalEnrolledStudents:-1
+                    totalEnrolledStudents: -1
                 }).toArray();
                 res.send(result);
             }
@@ -104,25 +104,78 @@ async function run() {
         })
 
         app.patch('/classes/:id', async (req, res) => {
-            const { i } = req.body;
-            console.log(i);
+            const data = req.body;
+            const { approve } = data;
+
             const id = req.params.id;
             console.log(id);
             const filter = { _id: new ObjectId(id) };
 
 
-            const updateDocument = {
-                $set: {
-                    status: i === true ? 'approved' : 'denied'
-
+            if(approve===true)
+            {
+                const updateDocument = {
+                
+                    $set: {
+                        status: approve === true ? 'approved' :'denied'
+    
+                    }
+    
+    
+                }
+    
+                const result = await classCollection.updateOne(filter, updateDocument);
+                res.send(result);
+            }
+            if(approve===false)
+            {
+                const updateDocument = {
+                
+                    $set: {
+                        status: approve === false ? 'denied' : 'approved'
+    
+                    }
+    
                 }
 
-
+    
+                const result = await classCollection.updateOne(filter, updateDocument);
+                res.send(result);
             }
+            
+            if(approve==='1')
+            {
+                const updateDocument = {
+                
+                    $set: {
+                        classImg:data.photo,
+                        className: data.name,
+                        price:data.price
+    
+                    }
+    
+                }
 
-            const result = await classCollection.updateOne(filter, updateDocument);
+    
+                const result = await classCollection.updateOne(filter, updateDocument);
+                res.send(result);
+            }
+            
+
+        })
+
+        app.put('/classes/:id', async (req, res) => {
+            const data = req.body;
+            // console.log(data);
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    adminFeedback: data?.adminFeedback
+                },
+            };
+            const result = await classCollection.updateOne(filter, updateDoc);
             res.send(result);
-
         })
 
 
@@ -144,18 +197,18 @@ async function run() {
             res.send(result);
         })
 
-        app.put('/users/:id',async(req,res)=>{
-            const data=req.body;
+        app.put('/users/:id', async (req, res) => {
+            const data = req.body;
             // console.log(data);
-            const id=req.params.id;
-            const filter={_id:new ObjectId(id)};
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
             const updateDoc = {
                 $set: {
-                  adminFeedback:data.adminFeedback
+                    adminFeedback: data.adminFeedback
                 },
-              };
-              const result=await usersCollection.updateOne(filter,updateDoc);
-              res.send(result);
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.send(result);
         })
 
 
@@ -256,10 +309,7 @@ async function run() {
 
         })
 
-        // app.post('/instructors',async(req,res)=>{
-        //     const 
-        // })
-        // payment intent post
+
         app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const { price } = req.body;
             const amount = parseInt(price * 100)
@@ -296,16 +346,6 @@ async function run() {
                 },
             }
 
-            // const updateResult = await classCollection.updateOne(
-
-            //     { _id: new ObjectId(payment.classId) },
-            //    {
-            //     $set: {
-            //         seats: -1,
-
-            //       },
-            //    }
-            // );
             const updateResult = await classCollection.updateOne(filter, doc)
 
             res.send({ insertResult, deleteResult, updateResult });
