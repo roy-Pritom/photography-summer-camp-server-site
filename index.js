@@ -120,11 +120,6 @@ async function run() {
 
             }
 
-
-
-
-
-
             const result = await classCollection.updateOne(filter, updateDocument);
             res.send(result);
 
@@ -132,7 +127,7 @@ async function run() {
 
 
 
-        // users
+        // users 
         app.post('/users', async (req, res) => {
             const user = req.body;
             const query = { email: user.email }
@@ -148,6 +143,22 @@ async function run() {
             const result = await usersCollection.find().toArray();
             res.send(result);
         })
+
+        app.put('/users/:id',async(req,res)=>{
+            const data=req.body;
+            // console.log(data);
+            const id=req.params.id;
+            const filter={_id:new ObjectId(id)};
+            const updateDoc = {
+                $set: {
+                  adminFeedback:data.adminFeedback
+                },
+              };
+              const result=await usersCollection.updateOne(filter,updateDoc);
+              res.send(result);
+        })
+
+
 
 
         //  cart
@@ -212,7 +223,7 @@ async function run() {
         })
 
 
-        // instructor
+        // instructor(admin make instructor)
 
         app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
