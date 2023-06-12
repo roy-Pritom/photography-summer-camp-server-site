@@ -49,7 +49,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         const instructorsCollection = client.db('summerCampDB').collection('instructors');
         const usersCollection = client.db('summerCampDB').collection('users');
@@ -76,20 +76,14 @@ async function run() {
             else {
 
                 const query = { status: 'approved' }
-                const result = await classCollection.find(query).sort({
-                    totalEnrolledStudents: -1
-                }).toArray();
+                const result = await classCollection.find(query).sort({ totalEnrolledStudents: -1 }).toArray();
                 res.send(result);
             }
         })
 
 
-        app.get('/classes', verifyJWT, async (req, res) => {
+        app.get('/classes', async (req, res) => {
             const email = req.query.email;
-            if (req.decoded.email !== email) {
-                return res.status(403).send({ error: true, message: 'forbidden access' })
-
-            }
             const query = { instructorEmail: email }
             const result = await classCollection.find(query).toArray();
             res.send(result);
@@ -112,55 +106,52 @@ async function run() {
             const filter = { _id: new ObjectId(id) };
 
 
-            if(approve===true)
-            {
+            if (approve === true) {
                 const updateDocument = {
-                
+
                     $set: {
-                        status: approve === true ? 'approved' :'denied'
-    
+                        status: approve === true ? 'approved' : 'denied'
+
                     }
-    
-    
+
+
                 }
-    
+
                 const result = await classCollection.updateOne(filter, updateDocument);
                 res.send(result);
             }
-            if(approve===false)
-            {
+            if (approve === false) {
                 const updateDocument = {
-                
+
                     $set: {
                         status: approve === false ? 'denied' : 'approved'
-    
+
                     }
-    
+
                 }
 
-    
+
                 const result = await classCollection.updateOne(filter, updateDocument);
                 res.send(result);
             }
-            
-            if(approve==='1')
-            {
+
+            if (approve === '1') {
                 const updateDocument = {
-                
+
                     $set: {
-                        classImg:data.photo,
+                        classImg: data.photo,
                         className: data.name,
-                        price:data.price
-    
+                        price: data.price
+
                     }
-    
+
                 }
 
-    
+
                 const result = await classCollection.updateOne(filter, updateDocument);
                 res.send(result);
             }
-            
+
 
         })
 
@@ -192,7 +183,7 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/users', verifyJWT, async (req, res) => {
+        app.get('/users', async (req, res) => {
             const result = await usersCollection.find().toArray();
             res.send(result);
         })
@@ -249,12 +240,8 @@ async function run() {
 
         //   admin
 
-        app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+        app.get('/users/admin/:email', async (req, res) => {
             const email = req.params.email;
-            if (req.decoded.email !== email) {
-                return res.status(403).send({ error: true, message: 'forbidden access' })
-
-            }
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             const result = { admin: user?.role === 'admin' }
@@ -278,12 +265,8 @@ async function run() {
 
         // instructor(admin make instructor)
 
-        app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
+        app.get('/users/instructor/:email', async (req, res) => {
             const email = req.params.email;
-            if (req.decoded.email !== email) {
-                return res.status(403).send({ error: true, message: 'forbidden access' })
-
-            }
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             const result = { instructor: user?.role === 'instructor' };
